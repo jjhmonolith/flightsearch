@@ -8,8 +8,6 @@ interface FlightCardProps {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  tequila: "Kiwi.com",
-  amadeus: "Amadeus",
   serpapi: "Google Flights",
   duffel: "Duffel",
 };

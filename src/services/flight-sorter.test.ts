@@ -43,8 +43,8 @@ function makeFlight(overrides: {
       {
         amount: overrides.price,
         currency: "KRW",
-        source: "tequila",
-        bookingUrl: "https://kiwi.com/book",
+        source: "serpapi",
+        bookingUrl: "https://serpapi.com/book",
         bookingType: "redirect",
       },
     ],

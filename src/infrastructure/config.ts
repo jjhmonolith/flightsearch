@@ -1,9 +1,6 @@
 import { z } from "zod";
 
 const ConfigSchema = z.object({
-  TEQUILA_API_KEY: z.string().optional().default(""),
-  AMADEUS_CLIENT_ID: z.string().optional().default(""),
-  AMADEUS_CLIENT_SECRET: z.string().optional().default(""),
   SERPAPI_KEY: z.string().optional().default(""),
   DUFFEL_API_TOKEN: z.string().optional().default(""),
   CACHE_TTL_MINUTES: z.coerce.number().int().positive().default(15),

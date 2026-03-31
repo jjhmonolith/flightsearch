@@ -52,23 +52,23 @@ const makeFlight = (
 describe("deduplicateFlights", () => {
   it("merges same-ID flights from different sources", () => {
     const flights = [
-      makeFlight("flight-1", "tequila", 285000),
-      makeFlight("flight-1", "amadeus", 290000),
+      makeFlight("flight-1", "serpapi", 285000),
+      makeFlight("flight-1", "duffel", 290000),
     ];
 
     const result = deduplicateFlights(flights);
     expect(result).toHaveLength(1);
     expect(result[0].prices).toHaveLength(2);
     expect(result[0].prices.map((p) => p.source)).toEqual([
-      "tequila",
-      "amadeus",
+      "serpapi",
+      "duffel",
     ]);
   });
 
   it("keeps different flights separate", () => {
     const flights = [
-      makeFlight("flight-1", "tequila", 285000),
-      makeFlight("flight-2", "tequila", 195000),
+      makeFlight("flight-1", "serpapi", 285000),
+      makeFlight("flight-2", "serpapi", 195000),
     ];
 
     const result = deduplicateFlights(flights);
@@ -77,8 +77,8 @@ describe("deduplicateFlights", () => {
 
   it("does not duplicate same-source prices", () => {
     const flights = [
-      makeFlight("flight-1", "tequila", 285000),
-      makeFlight("flight-1", "tequila", 285000),
+      makeFlight("flight-1", "serpapi", 285000),
+      makeFlight("flight-1", "serpapi", 285000),
     ];
 
     const result = deduplicateFlights(flights);

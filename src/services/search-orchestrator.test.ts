@@ -72,9 +72,9 @@ const baseRequest = {
 
 describe("searchFlights", () => {
   it("returns flights sorted by price", async () => {
-    const adapter = createMockAdapter("tequila", [
-      makeMockFlight("f1", 300000, "tequila"),
-      makeMockFlight("f2", 195000, "tequila"),
+    const adapter = createMockAdapter("serpapi", [
+      makeMockFlight("f1", 300000, "serpapi"),
+      makeMockFlight("f2", 195000, "serpapi"),
     ]);
 
     const result = await searchFlights(baseRequest, [adapter]);
@@ -91,8 +91,8 @@ describe("searchFlights", () => {
       search: vi.fn().mockRejectedValue(new Error("API down")),
       isAvailable: () => true,
     };
-    const workingAdapter = createMockAdapter("tequila", [
-      makeMockFlight("f1", 285000, "tequila"),
+    const workingAdapter = createMockAdapter("serpapi", [
+      makeMockFlight("f1", 285000, "serpapi"),
     ]);
 
     const result = await searchFlights(baseRequest, [
@@ -115,8 +115,8 @@ describe("searchFlights", () => {
   });
 
   it("searches multiple destinations in parallel", async () => {
-    const adapter = createMockAdapter("tequila", [
-      makeMockFlight("f1", 285000, "tequila"),
+    const adapter = createMockAdapter("serpapi", [
+      makeMockFlight("f1", 285000, "serpapi"),
     ]);
 
     const multiDestRequest = {
@@ -132,7 +132,7 @@ describe("searchFlights", () => {
   });
 
   it("includes searchedAt timestamp", async () => {
-    const adapter = createMockAdapter("tequila", []);
+    const adapter = createMockAdapter("serpapi", []);
     const result = await searchFlights(baseRequest, [adapter]);
 
     expect(result.searchedAt).toBeDefined();
@@ -140,11 +140,11 @@ describe("searchFlights", () => {
   });
 
   it("deduplicates flights from multiple sources", async () => {
-    const adapter1 = createMockAdapter("tequila", [
-      makeMockFlight("same-id", 285000, "tequila"),
+    const adapter1 = createMockAdapter("serpapi", [
+      makeMockFlight("same-id", 285000, "serpapi"),
     ]);
-    const adapter2 = createMockAdapter("amadeus", [
-      makeMockFlight("same-id", 290000, "amadeus"),
+    const adapter2 = createMockAdapter("duffel", [
+      makeMockFlight("same-id", 290000, "duffel"),
     ]);
 
     const result = await searchFlights(baseRequest, [adapter1, adapter2]);
