@@ -3,11 +3,10 @@
 import { useState } from "react";
 import type { CabinClass } from "@/models/flight";
 import AirportSearch from "./airport-search";
-import TimeRangeInput from "./time-range-input";
 import StopoverInput from "./stopover-input";
 import type { StopoverData } from "./stopover-input";
 
-interface TimeRange {
+interface DateTimeRange {
   readonly from: string;
   readonly to: string;
 }
@@ -21,13 +20,11 @@ export interface SearchFormData {
   readonly departureCity: string;
   readonly returnCity?: string;
   readonly destinationCities: string[];
-  readonly departureDate: string;
-  readonly returnDate: string;
+  readonly departureRange: DateTimeRange;
+  readonly returnRange: DateTimeRange;
   readonly passengers: number;
   readonly cabinClass: CabinClass;
   readonly currency: string;
-  readonly departureTimeRange?: TimeRange;
-  readonly returnTimeRange?: TimeRange;
   readonly outboundMaxDurationHours?: number;
   readonly returnMaxDurationHours?: number;
   readonly outboundStopovers: StopoverData[];
@@ -47,18 +44,17 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
   const [returnCity, setReturnCity] = useState("");
   const [destinationInput, setDestinationInput] = useState("");
   const [destinations, setDestinations] = useState<string[]>([]);
-  const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+
+  // Departure datetime range
+  const [depFrom, setDepFrom] = useState("");
+  const [depTo, setDepTo] = useState("");
+
+  // Return datetime range
+  const [retFrom, setRetFrom] = useState("");
+  const [retTo, setRetTo] = useState("");
+
   const [passengers, setPassengers] = useState(1);
   const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
-
-  // Time range
-  const [depTimeEnabled, setDepTimeEnabled] = useState(false);
-  const [depTimeFrom, setDepTimeFrom] = useState("06:00");
-  const [depTimeTo, setDepTimeTo] = useState("22:00");
-  const [retTimeEnabled, setRetTimeEnabled] = useState(false);
-  const [retTimeFrom, setRetTimeFrom] = useState("06:00");
-  const [retTimeTo, setRetTimeTo] = useState("22:00");
 
   // Duration filter
   const [durationFilterEnabled, setDurationFilterEnabled] = useState(false);
@@ -86,6 +82,7 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (destinations.length === 0) return;
+    if (!depFrom || !depTo || !retFrom || !retTo) return;
 
     const validOutbound = outboundStopovers.filter(
       (s) => s.city.length === 3
@@ -96,8 +93,8 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
       departureCity,
       ...(differentReturnCity && returnCity.length === 3 && { returnCity }),
       destinationCities: destinations,
-      departureDate,
-      returnDate,
+      departureRange: { from: depFrom, to: depTo },
+      returnRange: { from: retFrom, to: retTo },
       passengers,
       cabinClass,
       currency: "KRW",
@@ -107,18 +104,12 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
         outboundMaxDurationHours: outboundMaxHours,
         returnMaxDurationHours: returnMaxHours,
       }),
-      ...(depTimeEnabled && {
-        departureTimeRange: { from: depTimeFrom, to: depTimeTo },
-      }),
-      ...(retTimeEnabled && {
-        returnTimeRange: { from: retTimeFrom, to: retTimeTo },
-      }),
     };
 
     onSearch(params);
   }
 
-  const today = new Date().toISOString().split("T")[0];
+  const nowLocal = new Date().toISOString().slice(0, 16);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -210,44 +201,74 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
         </div>
       </div>
 
-      {/* Date & Passengers */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Departure Datetime Range */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label
-            htmlFor="departureDate"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            출발일
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            출발 가능 시작
           </label>
           <input
-            id="departureDate"
-            type="date"
-            value={departureDate}
-            onChange={(e) => setDepartureDate(e.target.value)}
-            min={today}
+            type="datetime-local"
+            value={depFrom}
+            onChange={(e) => {
+              setDepFrom(e.target.value);
+              if (!depTo || e.target.value > depTo) setDepTo(e.target.value);
+            }}
+            min={nowLocal}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             required
           />
         </div>
-
         <div>
-          <label
-            htmlFor="returnDate"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            귀국일 (현지 시간)
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            출발 가능 종료
           </label>
           <input
-            id="returnDate"
-            type="date"
-            value={returnDate}
-            onChange={(e) => setReturnDate(e.target.value)}
-            min={departureDate || today}
+            type="datetime-local"
+            value={depTo}
+            onChange={(e) => setDepTo(e.target.value)}
+            min={depFrom || nowLocal}
             className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
             required
           />
         </div>
+      </div>
 
+      {/* Return Datetime Range */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            귀국 가능 시작 (현지 시간)
+          </label>
+          <input
+            type="datetime-local"
+            value={retFrom}
+            onChange={(e) => {
+              setRetFrom(e.target.value);
+              if (!retTo || e.target.value > retTo) setRetTo(e.target.value);
+            }}
+            min={depFrom || nowLocal}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            required
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            귀국 가능 종료 (현지 시간)
+          </label>
+          <input
+            type="datetime-local"
+            value={retTo}
+            onChange={(e) => setRetTo(e.target.value)}
+            min={retFrom || depFrom || nowLocal}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+            required
+          />
+        </div>
+      </div>
+
+      {/* Passengers & Cabin */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label
             htmlFor="passengers"
@@ -302,28 +323,6 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           label="오는 편 경유지"
           stopovers={returnStopovers}
           onChange={setReturnStopovers}
-        />
-      </div>
-
-      {/* Time Range Filters */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <TimeRangeInput
-          label="출발 시간대 설정"
-          from={depTimeFrom}
-          to={depTimeTo}
-          enabled={depTimeEnabled}
-          onEnabledChange={setDepTimeEnabled}
-          onFromChange={setDepTimeFrom}
-          onToChange={setDepTimeTo}
-        />
-        <TimeRangeInput
-          label="귀국 시간대 설정 (현지 시간)"
-          from={retTimeFrom}
-          to={retTimeTo}
-          enabled={retTimeEnabled}
-          onEnabledChange={setRetTimeEnabled}
-          onFromChange={setRetTimeFrom}
-          onToChange={setRetTimeTo}
         />
       </div>
 

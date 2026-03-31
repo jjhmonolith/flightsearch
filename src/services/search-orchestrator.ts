@@ -1,5 +1,6 @@
 import type { FlightSourceAdapter } from "@/adapters/types";
 import type { SearchRequest } from "@/models/search-request";
+import { getDatesInRange } from "@/models/search-request";
 import type {
   SearchResponse,
   SearchError,
@@ -27,7 +28,6 @@ async function searchSingleLeg(
         cabinClass: request.cabinClass,
         currency: request.currency,
       });
-      // Tag each flight with the leg label and strip returnLeg
       const taggedFlights = results.map((f) => ({
         ...f,
         returnLeg: undefined,
@@ -95,12 +95,10 @@ export async function searchFlights(
     (request.outboundStopovers?.length ?? 0) > 0 ||
     (request.returnStopovers?.length ?? 0) > 0;
 
-  // --- Multi-leg (stopover) mode ---
   if (hasStopovers) {
     return searchMultiLeg(request, availableAdapters);
   }
 
-  // --- Standard round-trip mode ---
   return searchRoundTrip(request, availableAdapters);
 }
 
@@ -108,30 +106,38 @@ async function searchRoundTrip(
   request: SearchRequest,
   adapters: readonly FlightSourceAdapter[]
 ): Promise<SearchResponse> {
+  const departureDates = getDatesInRange(request.departureRange);
+  const returnDates = getDatesInRange(request.returnRange);
+
+  // Search each (departureDate, returnDate, destination) combination
   const searchPromises = request.destinationCities.flatMap((destination) =>
-    adapters.map(async (adapter) => {
-      try {
-        const results = await adapter.search({
-          departureCity: request.departureCity,
-          destinationCity: destination,
-          departureDate: request.departureDate,
-          returnDate: request.returnDate,
-          returnCity: request.returnCity,
-          passengers: request.passengers,
-          cabinClass: request.cabinClass,
-          currency: request.currency,
-        });
-        return {
-          status: "ok" as const,
-          flights: results,
-          source: adapter.name,
-        };
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unknown error";
-        return { status: "error" as const, source: adapter.name, message };
-      }
-    })
+    departureDates.flatMap((depDate) =>
+      returnDates.flatMap((retDate) =>
+        adapters.map(async (adapter) => {
+          try {
+            const results = await adapter.search({
+              departureCity: request.departureCity,
+              destinationCity: destination,
+              departureDate: depDate,
+              returnDate: retDate,
+              returnCity: request.returnCity,
+              passengers: request.passengers,
+              cabinClass: request.cabinClass,
+              currency: request.currency,
+            });
+            return {
+              status: "ok" as const,
+              flights: results,
+              source: adapter.name,
+            };
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Unknown error";
+            return { status: "error" as const, source: adapter.name, message };
+          }
+        })
+      )
+    )
   );
 
   const results = await Promise.allSettled(searchPromises);
@@ -158,8 +164,8 @@ async function searchRoundTrip(
   const deduplicated = deduplicateFlights(allFlights);
   const filtered = filterFlightsByTime(
     deduplicated,
-    request.departureTimeRange,
-    request.returnTimeRange,
+    request.departureRange,
+    request.returnRange,
     {
       outboundMaxDurationHours: request.outboundMaxDurationHours,
       returnMaxDurationHours: request.returnMaxDurationHours,
@@ -180,25 +186,26 @@ async function searchMultiLeg(
   request: SearchRequest,
   adapters: readonly FlightSourceAdapter[]
 ): Promise<SearchResponse> {
-  // For multi-destination stopovers, search each destination separately
   const allLegResults: LegResult[] = [];
   const allErrors: SearchError[] = [];
+
+  // Use first date from each range for leg calculation
+  const departureDate = request.departureRange.from.split("T")[0];
+  const returnDate = request.returnRange.from.split("T")[0];
 
   for (const destination of request.destinationCities) {
     const legs = calculateLegs(
       request.departureCity,
       destination,
-      request.departureDate,
-      request.returnDate,
+      departureDate,
+      returnDate,
       request.outboundStopovers,
       request.returnStopovers,
       request.returnCity
     );
 
-    // outbound legs = stopovers + 1 final leg to destination
     const outboundLegCount = (request.outboundStopovers?.length ?? 0) + 1;
 
-    // Search all legs in parallel
     const legPromises = legs.map((leg) =>
       searchSingleLeg(leg, adapters, request)
     );

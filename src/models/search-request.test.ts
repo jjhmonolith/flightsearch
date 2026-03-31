@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { SearchRequestSchema } from "./search-request";
+import { SearchRequestSchema, getDatesInRange } from "./search-request";
 
 describe("SearchRequestSchema", () => {
   const validRequest = {
     departureCity: "ICN",
     destinationCities: ["NRT"],
-    departureDate: "2026-05-01",
-    returnDate: "2026-05-08",
+    departureRange: { from: "2026-05-01T09:00", to: "2026-05-01T22:00" },
+    returnRange: { from: "2026-05-08T09:00", to: "2026-05-08T22:00" },
     passengers: 1,
     cabinClass: "economy" as const,
     currency: "KRW",
@@ -29,8 +29,8 @@ describe("SearchRequestSchema", () => {
     const result = SearchRequestSchema.safeParse({
       departureCity: "ICN",
       destinationCities: ["NRT"],
-      departureDate: "2026-05-01",
-      returnDate: "2026-05-08",
+      departureRange: { from: "2026-05-01T09:00", to: "2026-05-01T22:00" },
+      returnRange: { from: "2026-05-08T09:00", to: "2026-05-08T22:00" },
     });
     expect(result.success).toBe(true);
     if (result.success) {
@@ -64,19 +64,19 @@ describe("SearchRequestSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects invalid date format", () => {
+  it("rejects invalid datetime format", () => {
     const result = SearchRequestSchema.safeParse({
       ...validRequest,
-      departureDate: "05/01/2026",
+      departureRange: { from: "2026-05-01", to: "2026-05-01T22:00" },
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects return date before departure date", () => {
+  it("rejects return before departure", () => {
     const result = SearchRequestSchema.safeParse({
       ...validRequest,
-      departureDate: "2026-05-08",
-      returnDate: "2026-05-01",
+      departureRange: { from: "2026-05-08T09:00", to: "2026-05-08T22:00" },
+      returnRange: { from: "2026-05-01T09:00", to: "2026-05-01T22:00" },
     });
     expect(result.success).toBe(false);
   });
@@ -95,5 +95,33 @@ describe("SearchRequestSchema", () => {
       cabinClass: "luxury",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("getDatesInRange", () => {
+  it("returns single date for same-day range", () => {
+    const dates = getDatesInRange({
+      from: "2026-05-01T09:00",
+      to: "2026-05-01T22:00",
+    });
+    expect(dates).toEqual(["2026-05-01"]);
+  });
+
+  it("returns multiple dates for multi-day range", () => {
+    const dates = getDatesInRange({
+      from: "2026-05-01T09:00",
+      to: "2026-05-03T18:00",
+    });
+    expect(dates).toEqual(["2026-05-01", "2026-05-02", "2026-05-03"]);
+  });
+
+  it("caps at 5 dates", () => {
+    const dates = getDatesInRange({
+      from: "2026-05-01T00:00",
+      to: "2026-05-10T23:59",
+    });
+    expect(dates).toHaveLength(5);
+    expect(dates[0]).toBe("2026-05-01");
+    expect(dates[4]).toBe("2026-05-05");
   });
 });

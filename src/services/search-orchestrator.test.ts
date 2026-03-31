@@ -61,8 +61,8 @@ function createMockAdapter(
 const baseRequest = {
   departureCity: "ICN",
   destinationCities: ["NRT"],
-  departureDate: "2026-05-01",
-  returnDate: "2026-05-08",
+  departureRange: { from: "2026-05-01T00:00", to: "2026-05-01T23:59" },
+  returnRange: { from: "2026-05-08T00:00", to: "2026-05-08T23:59" },
   passengers: 1,
   cabinClass: "economy" as const,
   currency: "KRW",

@@ -1,10 +1,10 @@
 import type { Flight } from "@/models/flight";
-import type { TimeRange } from "@/models/search-request";
-import { extractTimeHHMM } from "@/lib/format";
+import type { DateTimeRange } from "@/models/search-request";
 
-function isTimeInRange(dateTimeStr: string, range: TimeRange): boolean {
-  const time = extractTimeHHMM(dateTimeStr);
-  return time >= range.from && time <= range.to;
+function isDateTimeInRange(dateTimeStr: string, range: DateTimeRange): boolean {
+  // Normalize to comparable format (strip seconds/timezone for local comparison)
+  const normalized = dateTimeStr.replace(/:\d{2}\.\d{3}Z$/, "").replace(/:\d{2}$/, "").slice(0, 16);
+  return normalized >= range.from && normalized <= range.to;
 }
 
 interface DurationFilter {
@@ -14,21 +14,21 @@ interface DurationFilter {
 
 export function filterFlightsByTime(
   flights: readonly Flight[],
-  departureTimeRange?: TimeRange,
-  returnTimeRange?: TimeRange,
+  departureRange?: DateTimeRange,
+  returnRange?: DateTimeRange,
   durationFilter?: DurationFilter
 ): readonly Flight[] {
   return flights.filter((flight) => {
-    if (departureTimeRange) {
+    if (departureRange) {
       const firstOutboundSegment = flight.outbound.segments[0];
-      if (!isTimeInRange(firstOutboundSegment.departureTime, departureTimeRange)) {
+      if (!isDateTimeInRange(firstOutboundSegment.departureTime, departureRange)) {
         return false;
       }
     }
 
-    if (returnTimeRange && flight.returnLeg) {
+    if (returnRange && flight.returnLeg) {
       const firstReturnSegment = flight.returnLeg.segments[0];
-      if (!isTimeInRange(firstReturnSegment.departureTime, returnTimeRange)) {
+      if (!isDateTimeInRange(firstReturnSegment.departureTime, returnRange)) {
         return false;
       }
     }

@@ -33,12 +33,6 @@ export function formatTime(dateTimeStr: string): string {
   return dateTimeStr;
 }
 
-/**
- * Extract HH:mm for time range filtering.
- */
-export function extractTimeHHMM(dateTimeStr: string): string {
-  return formatTime(dateTimeStr);
-}
 
 /**
  * Format date string to display date (M월 D일).
