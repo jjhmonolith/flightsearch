@@ -159,7 +159,11 @@ async function searchRoundTrip(
   const filtered = filterFlightsByTime(
     deduplicated,
     request.departureTimeRange,
-    request.returnTimeRange
+    request.returnTimeRange,
+    {
+      outboundMaxDurationHours: request.outboundMaxDurationHours,
+      returnMaxDurationHours: request.returnMaxDurationHours,
+    }
   );
   const sorted = sortFlights(filtered, "price", "asc");
 
@@ -191,6 +195,9 @@ async function searchMultiLeg(
       request.returnCity
     );
 
+    // outbound legs = stopovers + 1 final leg to destination
+    const outboundLegCount = (request.outboundStopovers?.length ?? 0) + 1;
+
     // Search all legs in parallel
     const legPromises = legs.map((leg) =>
       searchSingleLeg(leg, adapters, request)
@@ -201,7 +208,13 @@ async function searchMultiLeg(
       const leg = legs[i];
       const result = legResults[i];
       const deduplicated = deduplicateFlights(result.flights);
-      const sorted = sortFlights(deduplicated, "price", "asc");
+      const maxHours = i < outboundLegCount
+        ? request.outboundMaxDurationHours
+        : request.returnMaxDurationHours;
+      const durationFiltered = maxHours !== undefined
+        ? deduplicated.filter((f) => f.outbound.totalDuration <= maxHours * 60)
+        : deduplicated;
+      const sorted = sortFlights(durationFiltered, "price", "asc");
 
       allLegResults.push({
         label: leg.label,

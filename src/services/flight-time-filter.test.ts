@@ -4,10 +4,12 @@ import type { Flight } from "@/models/flight";
 
 function makeFlight(
   outboundDepartureTime: string,
-  returnDepartureTime: string
+  returnDepartureTime: string,
+  outboundDuration = 150,
+  returnDuration = 180
 ): Flight {
   return {
-    id: `flight-${outboundDepartureTime}`,
+    id: `flight-${outboundDepartureTime}-${outboundDuration}`,
     outbound: {
       segments: [
         {
@@ -17,10 +19,10 @@ function makeFlight(
           arrivalTime: "2026-05-01T11:30:00",
           airline: "KE",
           flightNumber: "KE701",
-          duration: 150,
+          duration: outboundDuration,
         },
       ],
-      totalDuration: 150,
+      totalDuration: outboundDuration,
       stops: 0,
     },
     returnLeg: {
@@ -32,10 +34,10 @@ function makeFlight(
           arrivalTime: "2026-05-08T17:00:00",
           airline: "KE",
           flightNumber: "KE702",
-          duration: 180,
+          duration: returnDuration,
         },
       ],
-      totalDuration: 180,
+      totalDuration: returnDuration,
       stops: 0,
     },
     prices: [
@@ -90,5 +92,55 @@ describe("filterFlightsByTime", () => {
   it("returns empty when no flights match", () => {
     const result = filterFlightsByTime(flights, { from: "23:00", to: "23:59" });
     expect(result).toHaveLength(0);
+  });
+});
+
+describe("filterFlightsByTime - duration filter", () => {
+  const flights = [
+    makeFlight("2026-05-01T09:00:00", "2026-05-08T14:00:00", 120, 150), // 2h outbound, 2.5h return
+    makeFlight("2026-05-01T10:00:00", "2026-05-08T15:00:00", 480, 600), // 8h outbound, 10h return
+    makeFlight("2026-05-01T11:00:00", "2026-05-08T16:00:00", 900, 180), // 15h outbound, 3h return
+  ];
+
+  it("filters by outbound max duration", () => {
+    const result = filterFlightsByTime(flights, undefined, undefined, {
+      outboundMaxDurationHours: 10,
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0].outbound.totalDuration).toBe(120);
+    expect(result[1].outbound.totalDuration).toBe(480);
+  });
+
+  it("filters by return max duration", () => {
+    const result = filterFlightsByTime(flights, undefined, undefined, {
+      returnMaxDurationHours: 5,
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0].returnLeg!.totalDuration).toBe(150);
+    expect(result[1].returnLeg!.totalDuration).toBe(180);
+  });
+
+  it("filters by both outbound and return max duration", () => {
+    const result = filterFlightsByTime(flights, undefined, undefined, {
+      outboundMaxDurationHours: 10,
+      returnMaxDurationHours: 3,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].outbound.totalDuration).toBe(120);
+  });
+
+  it("does not filter when duration filter is undefined", () => {
+    const result = filterFlightsByTime(flights, undefined, undefined, undefined);
+    expect(result).toHaveLength(3);
+  });
+
+  it("combines time range and duration filters", () => {
+    const result = filterFlightsByTime(
+      flights,
+      { from: "09:00", to: "11:00" },
+      undefined,
+      { outboundMaxDurationHours: 10 }
+    );
+    expect(result).toHaveLength(2);
   });
 });

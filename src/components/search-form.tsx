@@ -28,6 +28,8 @@ export interface SearchFormData {
   readonly currency: string;
   readonly departureTimeRange?: TimeRange;
   readonly returnTimeRange?: TimeRange;
+  readonly outboundMaxDurationHours?: number;
+  readonly returnMaxDurationHours?: number;
   readonly outboundStopovers: StopoverData[];
   readonly returnStopovers: StopoverData[];
 }
@@ -57,6 +59,11 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
   const [retTimeEnabled, setRetTimeEnabled] = useState(false);
   const [retTimeFrom, setRetTimeFrom] = useState("06:00");
   const [retTimeTo, setRetTimeTo] = useState("22:00");
+
+  // Duration filter
+  const [durationFilterEnabled, setDurationFilterEnabled] = useState(false);
+  const [outboundMaxHours, setOutboundMaxHours] = useState(24);
+  const [returnMaxHours, setReturnMaxHours] = useState(24);
 
   // Stopovers
   const [outboundStopovers, setOutboundStopovers] = useState<StopoverData[]>(
@@ -96,6 +103,10 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
       currency: "KRW",
       outboundStopovers: validOutbound,
       returnStopovers: validReturn,
+      ...(durationFilterEnabled && {
+        outboundMaxDurationHours: outboundMaxHours,
+        returnMaxDurationHours: returnMaxHours,
+      }),
       ...(depTimeEnabled && {
         departureTimeRange: { from: depTimeFrom, to: depTimeTo },
       }),
@@ -314,6 +325,63 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           onFromChange={setRetTimeFrom}
           onToChange={setRetTimeTo}
         />
+      </div>
+
+      {/* Duration Filter */}
+      <div className="rounded-lg border border-gray-200 p-4">
+        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+          <input
+            type="checkbox"
+            checked={durationFilterEnabled}
+            onChange={(e) => setDurationFilterEnabled(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          최대 비행시간 설정
+        </label>
+        {durationFilterEnabled && (
+          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="outboundMaxHours"
+                className="mb-1 block text-sm text-gray-600"
+              >
+                가는 편 최대
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="outboundMaxHours"
+                  type="number"
+                  min={1}
+                  max={72}
+                  value={outboundMaxHours}
+                  onChange={(e) => setOutboundMaxHours(Number(e.target.value))}
+                  className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                />
+                <span className="text-sm text-gray-500">시간</span>
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="returnMaxHours"
+                className="mb-1 block text-sm text-gray-600"
+              >
+                오는 편 최대
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="returnMaxHours"
+                  type="number"
+                  min={1}
+                  max={72}
+                  value={returnMaxHours}
+                  onChange={(e) => setReturnMaxHours(Number(e.target.value))}
+                  className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                />
+                <span className="text-sm text-gray-500">시간</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <button

@@ -39,6 +39,8 @@ export const SearchRequestSchema = z
     currency: z.string().length(3).default("KRW"),
     departureTimeRange: TimeRangeSchema.optional(),
     returnTimeRange: TimeRangeSchema.optional(),
+    outboundMaxDurationHours: z.number().min(1).max(72).optional(),
+    returnMaxDurationHours: z.number().min(1).max(72).optional(),
     outboundStopovers: z.array(StopoverSchema).max(3).default([]),
     returnStopovers: z.array(StopoverSchema).max(3).default([]),
   })
