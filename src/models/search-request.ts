@@ -12,7 +12,11 @@ export type TimeRange = z.infer<typeof TimeRangeSchema>;
 
 export const StopoverSchema = z.object({
   city: z.string().length(3, "Airport code must be 3 characters"),
-  stayDays: z.number().int().min(1).max(30),
+  stayHoursMin: z.number().min(1).max(720),
+  stayHoursMax: z.number().min(1).max(720),
+}).refine((data) => data.stayHoursMax >= data.stayHoursMin, {
+  message: "Max hours must be >= min hours",
+  path: ["stayHoursMax"],
 });
 export type Stopover = z.infer<typeof StopoverSchema>;
 

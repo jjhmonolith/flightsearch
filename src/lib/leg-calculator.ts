@@ -7,20 +7,21 @@ export interface LegDefinition {
   readonly label: string;
 }
 
-function addDays(dateStr: string, days: number): string {
+function addHours(dateStr: string, hours: number): string {
   const date = new Date(dateStr + "T00:00:00Z");
-  date.setUTCDate(date.getUTCDate() + days);
+  date.setUTCHours(date.getUTCHours() + hours);
   return date.toISOString().split("T")[0];
 }
 
 /**
  * Calculate all flight legs from departure, stopovers, and return info.
+ * Uses the minimum stay hours to determine the earliest next leg date.
  *
- * Example with outbound stopover in BKK (3 days) and return stopover in SIN (2 days):
+ * Example with outbound stopover in BKK (48-72h) and return stopover in SIN (24-48h):
  *   ICN → BKK (May 1)
- *   BKK → NRT (May 4)
+ *   BKK → NRT (May 3)  -- 48h minimum
  *   NRT → SIN (May 9)
- *   SIN → ICN (May 11)
+ *   SIN → ICN (May 10)  -- 24h minimum
  */
 export function calculateLegs(
   departureCity: string,
@@ -42,9 +43,9 @@ export function calculateLegs(
       from: currentCity,
       to: stopover.city,
       date: currentDate,
-      label: `구간 ${legIndex}: ${currentCity} → ${stopover.city} (${stopover.stayDays}일 체류)`,
+      label: `구간 ${legIndex}: ${currentCity} → ${stopover.city} (${stopover.stayHoursMin}-${stopover.stayHoursMax}시간 체류)`,
     });
-    currentDate = addDays(currentDate, stopover.stayDays);
+    currentDate = addHours(currentDate, stopover.stayHoursMin);
     currentCity = stopover.city;
     legIndex++;
   }
@@ -67,9 +68,9 @@ export function calculateLegs(
       from: currentCity,
       to: stopover.city,
       date: currentDate,
-      label: `구간 ${legIndex}: ${currentCity} → ${stopover.city} (${stopover.stayDays}일 체류)`,
+      label: `구간 ${legIndex}: ${currentCity} → ${stopover.city} (${stopover.stayHoursMin}-${stopover.stayHoursMax}시간 체류)`,
     });
-    currentDate = addDays(currentDate, stopover.stayDays);
+    currentDate = addHours(currentDate, stopover.stayHoursMin);
     currentCity = stopover.city;
     legIndex++;
   }

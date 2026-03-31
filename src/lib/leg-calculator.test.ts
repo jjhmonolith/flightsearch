@@ -25,7 +25,7 @@ describe("calculateLegs", () => {
       "NRT",
       "2026-05-01",
       "2026-05-10",
-      [{ city: "BKK", stayDays: 3 }],
+      [{ city: "BKK", stayHoursMin: 72, stayHoursMax: 96 }],
       []
     );
     expect(legs).toHaveLength(3);
@@ -34,7 +34,7 @@ describe("calculateLegs", () => {
     expect(legs[0].date).toBe("2026-05-01");
     expect(legs[1].from).toBe("BKK");
     expect(legs[1].to).toBe("NRT");
-    expect(legs[1].date).toBe("2026-05-04"); // May 1 + 3 days
+    expect(legs[1].date).toBe("2026-05-04"); // May 1 + 72h = May 4
     expect(legs[2].from).toBe("NRT");
     expect(legs[2].to).toBe("ICN");
     expect(legs[2].date).toBe("2026-05-10");
@@ -47,7 +47,7 @@ describe("calculateLegs", () => {
       "2026-05-01",
       "2026-05-08",
       [],
-      [{ city: "SIN", stayDays: 2 }]
+      [{ city: "SIN", stayHoursMin: 48, stayHoursMax: 72 }]
     );
     expect(legs).toHaveLength(3);
     expect(legs[0].from).toBe("ICN");
@@ -57,7 +57,7 @@ describe("calculateLegs", () => {
     expect(legs[1].date).toBe("2026-05-08");
     expect(legs[2].from).toBe("SIN");
     expect(legs[2].to).toBe("ICN");
-    expect(legs[2].date).toBe("2026-05-10"); // May 8 + 2 days
+    expect(legs[2].date).toBe("2026-05-10"); // May 8 + 48h = May 10
   });
 
   it("handles both outbound and return stopovers", () => {
@@ -66,8 +66,8 @@ describe("calculateLegs", () => {
       "NRT",
       "2026-05-01",
       "2026-05-10",
-      [{ city: "BKK", stayDays: 3 }],
-      [{ city: "SIN", stayDays: 2 }]
+      [{ city: "BKK", stayHoursMin: 72, stayHoursMax: 96 }],
+      [{ city: "SIN", stayHoursMin: 48, stayHoursMax: 72 }]
     );
     expect(legs).toHaveLength(4);
     expect(legs.map((l) => `${l.from}→${l.to}`)).toEqual([
@@ -91,8 +91,8 @@ describe("calculateLegs", () => {
       "2026-06-01",
       "2026-06-20",
       [
-        { city: "BKK", stayDays: 3 },
-        { city: "DXB", stayDays: 2 },
+        { city: "BKK", stayHoursMin: 72, stayHoursMax: 96 },
+        { city: "DXB", stayHoursMin: 48, stayHoursMax: 72 },
       ],
       []
     );
@@ -103,19 +103,31 @@ describe("calculateLegs", () => {
       "DXB→CDG",
       "CDG→ICN",
     ]);
-    expect(legs[1].date).toBe("2026-06-04"); // Jun 1 + 3
-    expect(legs[2].date).toBe("2026-06-06"); // Jun 4 + 2
+    expect(legs[1].date).toBe("2026-06-04"); // Jun 1 + 72h
+    expect(legs[2].date).toBe("2026-06-06"); // Jun 4 + 48h
   });
 
-  it("includes stay days info in labels", () => {
+  it("includes stay hours info in labels", () => {
     const legs = calculateLegs(
       "ICN",
       "NRT",
       "2026-05-01",
       "2026-05-10",
-      [{ city: "BKK", stayDays: 3 }],
+      [{ city: "BKK", stayHoursMin: 48, stayHoursMax: 72 }],
       []
     );
-    expect(legs[0].label).toContain("3일 체류");
+    expect(legs[0].label).toContain("48-72시간 체류");
+  });
+
+  it("handles sub-day hour increments correctly", () => {
+    const legs = calculateLegs(
+      "ICN",
+      "NRT",
+      "2026-05-01",
+      "2026-05-10",
+      [{ city: "BKK", stayHoursMin: 12, stayHoursMax: 24 }],
+      []
+    );
+    expect(legs[1].date).toBe("2026-05-01"); // 12h stays on same day
   });
 });

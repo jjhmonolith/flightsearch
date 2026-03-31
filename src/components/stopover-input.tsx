@@ -4,7 +4,8 @@ import AirportSearch from "./airport-search";
 
 export interface StopoverData {
   readonly city: string;
-  readonly stayDays: number;
+  readonly stayHoursMin: number;
+  readonly stayHoursMax: number;
 }
 
 interface StopoverInputProps {
@@ -19,7 +20,7 @@ export default function StopoverInput({
   onChange,
 }: StopoverInputProps) {
   function handleAdd() {
-    onChange([...stopovers, { city: "", stayDays: 2 }]);
+    onChange([...stopovers, { city: "", stayHoursMin: 12, stayHoursMax: 48 }]);
   }
 
   function handleRemove(index: number) {
@@ -32,9 +33,23 @@ export default function StopoverInput({
     );
   }
 
-  function handleDaysChange(index: number, stayDays: number) {
+  function handleHoursMinChange(index: number, stayHoursMin: number) {
     onChange(
-      stopovers.map((s, i) => (i === index ? { ...s, stayDays } : s))
+      stopovers.map((s, i) =>
+        i === index
+          ? { ...s, stayHoursMin, stayHoursMax: Math.max(s.stayHoursMax, stayHoursMin) }
+          : s
+      )
+    );
+  }
+
+  function handleHoursMaxChange(index: number, stayHoursMax: number) {
+    onChange(
+      stopovers.map((s, i) =>
+        i === index
+          ? { ...s, stayHoursMax, stayHoursMin: Math.min(s.stayHoursMin, stayHoursMax) }
+          : s
+      )
     );
   }
 
@@ -68,21 +83,33 @@ export default function StopoverInput({
               </div>
               <div className="w-24">
                 <label className="mb-1 block text-sm font-medium text-gray-700">
-                  체류일
+                  최소(시간)
                 </label>
-                <select
-                  value={stopover.stayDays}
+                <input
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={stopover.stayHoursMin}
                   onChange={(e) =>
-                    handleDaysChange(index, Number(e.target.value))
+                    handleHoursMinChange(index, Number(e.target.value))
                   }
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
-                >
-                  {Array.from({ length: 14 }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>
-                      {n}일
-                    </option>
-                  ))}
-                </select>
+                />
+              </div>
+              <div className="w-24">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  최대(시간)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={stopover.stayHoursMax}
+                  onChange={(e) =>
+                    handleHoursMaxChange(index, Number(e.target.value))
+                  }
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                />
               </div>
               <button
                 type="button"
