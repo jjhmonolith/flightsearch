@@ -19,6 +19,7 @@ interface SearchFormProps {
 
 export interface SearchFormData {
   readonly departureCity: string;
+  readonly returnCity?: string;
   readonly destinationCities: string[];
   readonly departureDate: string;
   readonly returnDate: string;
@@ -40,6 +41,8 @@ const CABIN_OPTIONS: { value: CabinClass; label: string }[] = [
 
 export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
   const [departureCity, setDepartureCity] = useState("ICN");
+  const [differentReturnCity, setDifferentReturnCity] = useState(false);
+  const [returnCity, setReturnCity] = useState("");
   const [destinationInput, setDestinationInput] = useState("");
   const [destinations, setDestinations] = useState<string[]>([]);
   const [departureDate, setDepartureDate] = useState("");
@@ -84,6 +87,7 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
 
     const params: SearchFormData = {
       departureCity,
+      ...(differentReturnCity && returnCity.length === 3 && { returnCity }),
       destinationCities: destinations,
       departureDate,
       returnDate,
@@ -109,13 +113,40 @@ export default function SearchForm({ onSearch, isLoading }: SearchFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Departure & Destination */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <AirportSearch
-          id="departure"
-          label="출발지"
-          value={departureCity}
-          onChange={setDepartureCity}
-          placeholder="ICN"
-        />
+        <div>
+          <AirportSearch
+            id="departure"
+            label="출발지"
+            value={departureCity}
+            onChange={setDepartureCity}
+            placeholder="ICN"
+          />
+          <div className="mt-2">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                checked={differentReturnCity}
+                onChange={(e) => {
+                  setDifferentReturnCity(e.target.checked);
+                  if (!e.target.checked) setReturnCity("");
+                }}
+                className="rounded border-gray-300"
+              />
+              귀국 도착지 다르게 설정
+            </label>
+            {differentReturnCity && (
+              <div className="mt-2">
+                <AirportSearch
+                  id="returnCity"
+                  label="귀국 도착지"
+                  value={returnCity}
+                  onChange={setReturnCity}
+                  placeholder="귀국 도착 공항"
+                />
+              </div>
+            )}
+          </div>
+        </div>
 
         <div>
           <label

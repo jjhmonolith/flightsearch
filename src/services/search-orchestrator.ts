@@ -116,6 +116,7 @@ async function searchRoundTrip(
           destinationCity: destination,
           departureDate: request.departureDate,
           returnDate: request.returnDate,
+          returnCity: request.returnCity,
           passengers: request.passengers,
           cabinClass: request.cabinClass,
           currency: request.currency,
@@ -186,7 +187,8 @@ async function searchMultiLeg(
       request.departureDate,
       request.returnDate,
       request.outboundStopovers,
-      request.returnStopovers
+      request.returnStopovers,
+      request.returnCity
     );
 
     // Search all legs in parallel

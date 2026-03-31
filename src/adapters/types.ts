@@ -5,6 +5,7 @@ export interface FlightSearchParams {
   readonly destinationCity: string;
   readonly departureDate: string;
   readonly returnDate?: string;
+  readonly returnCity?: string;
   readonly passengers: number;
   readonly cabinClass: string;
   readonly currency: string;

@@ -130,4 +130,41 @@ describe("calculateLegs", () => {
     );
     expect(legs[1].date).toBe("2026-05-01"); // 12h stays on same day
   });
+
+  it("uses returnCity when specified (open-jaw)", () => {
+    const legs = calculateLegs("ICN", "NRT", "2026-05-01", "2026-05-08", [], [], "GMP");
+    expect(legs).toHaveLength(2);
+    expect(legs[0]).toEqual({
+      from: "ICN",
+      to: "NRT",
+      date: "2026-05-01",
+      label: "구간 1: ICN → NRT",
+    });
+    expect(legs[1]).toEqual({
+      from: "NRT",
+      to: "GMP",
+      date: "2026-05-08",
+      label: "구간 2: NRT → GMP",
+    });
+  });
+
+  it("falls back to departureCity when returnCity is undefined", () => {
+    const legs = calculateLegs("ICN", "NRT", "2026-05-01", "2026-05-08", [], [], undefined);
+    expect(legs[1].to).toBe("ICN");
+  });
+
+  it("uses returnCity with return stopovers", () => {
+    const legs = calculateLegs(
+      "ICN",
+      "NRT",
+      "2026-05-01",
+      "2026-05-08",
+      [],
+      [{ city: "SIN", stayHoursMin: 48, stayHoursMax: 72 }],
+      "GMP"
+    );
+    expect(legs).toHaveLength(3);
+    expect(legs[2].from).toBe("SIN");
+    expect(legs[2].to).toBe("GMP");
+  });
 });

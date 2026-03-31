@@ -29,8 +29,10 @@ export function calculateLegs(
   departureDate: string,
   returnDate: string,
   outboundStopovers: readonly Stopover[],
-  returnStopovers: readonly Stopover[]
+  returnStopovers: readonly Stopover[],
+  returnCity?: string
 ): readonly LegDefinition[] {
+  const finalReturnCity = returnCity ?? departureCity;
   const legs: LegDefinition[] = [];
   let legIndex = 1;
 
@@ -75,12 +77,12 @@ export function calculateLegs(
     legIndex++;
   }
 
-  // Final return leg back to departure city
+  // Final return leg back to return city (or departure city)
   legs.push({
     from: currentCity,
-    to: departureCity,
+    to: finalReturnCity,
     date: currentDate,
-    label: `구간 ${legIndex}: ${currentCity} → ${departureCity}`,
+    label: `구간 ${legIndex}: ${currentCity} → ${finalReturnCity}`,
   });
 
   return legs;

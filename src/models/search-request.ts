@@ -23,6 +23,7 @@ export type Stopover = z.infer<typeof StopoverSchema>;
 export const SearchRequestSchema = z
   .object({
     departureCity: z.string().length(3, "Airport code must be 3 characters"),
+    returnCity: z.string().length(3, "Airport code must be 3 characters").optional(),
     destinationCities: z
       .array(z.string().length(3, "Airport code must be 3 characters"))
       .min(1, "At least one destination is required")
