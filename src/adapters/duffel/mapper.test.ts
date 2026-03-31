@@ -50,7 +50,7 @@ describe("mapDuffelResponse", () => {
     expect(direct.prices[0].currency).toBe("KRW");
     expect(direct.prices[0].source).toBe("duffel");
     expect(direct.prices[0].bookingType).toBe("redirect");
-    expect(direct.prices[0].bookingUrl).toContain("duffel.com");
+    expect(direct.prices[0].bookingUrl).toContain("/api/duffel-book?offer_id=");
   });
 
   it("parses ISO 8601 duration to minutes", () => {

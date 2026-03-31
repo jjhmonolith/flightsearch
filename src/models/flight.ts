@@ -15,7 +15,7 @@ export const PriceSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().length(3),
   source: z.string().min(1),
-  bookingUrl: z.string().url(),
+  bookingUrl: z.string().min(1),
   bookingType: BookingTypeSchema,
 });
 export type Price = z.infer<typeof PriceSchema>;

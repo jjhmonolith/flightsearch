@@ -29,7 +29,7 @@ interface DuffelResponse {
   };
 }
 
-const DUFFEL_BOOKING_BASE = "https://app.duffel.com/book";
+const DUFFEL_BOOKING_API = "/api/duffel-book";
 
 /**
  * Parse ISO 8601 duration (PT2H30M) to minutes.
@@ -74,7 +74,7 @@ function mapPrice(offer: DuffelOffer): Price {
     amount: parseFloat(offer.total_amount),
     currency: offer.total_currency,
     source: "duffel",
-    bookingUrl: `${DUFFEL_BOOKING_BASE}/${offer.id}`,
+    bookingUrl: `${DUFFEL_BOOKING_API}?offer_id=${offer.id}`,
     bookingType: "redirect",
   };
 }

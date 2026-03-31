@@ -24,7 +24,7 @@ export async function fetchDuffelFlights(
             },
             {
               origin: params.destinationCity,
-              destination: params.departureCity,
+              destination: params.returnCity ?? params.departureCity,
               departure_date: params.returnDate,
             },
           ]
@@ -39,6 +39,7 @@ export async function fetchDuffelFlights(
         type: "adult",
       })),
       cabin_class: CABIN_CLASS_MAP[params.cabinClass] ?? "economy",
+      currency: params.currency,
       return_offers: true,
     },
   };
@@ -66,4 +67,37 @@ export async function fetchDuffelFlights(
   }
 
   return response.json();
+}
+
+/**
+ * Create a Duffel Links booking URL for an offer.
+ */
+export async function createDuffelLink(
+  offerId: string,
+  apiToken: string
+): Promise<string> {
+  const response = await fetch(`${DUFFEL_BASE_URL}/links/sessions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+      "Duffel-Version": "v2",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      data: {
+        offer_id: offerId,
+        markup_amount: "0.00",
+        markup_currency: "KRW",
+      },
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    return `https://duffel.com`;
+  }
+
+  const result = await response.json() as { data?: { url?: string } };
+  return result.data?.url ?? "https://duffel.com";
 }
